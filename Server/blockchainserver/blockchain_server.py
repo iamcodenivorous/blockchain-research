@@ -2,20 +2,28 @@ import blockchain as bc
 from flask import Flask, request, jsonify
 import requests_async as requests
 import sys
-block_chain = None
+import time
+import traceback
 app = Flask(__name__)
-
-@app.route('/')
-def index():
-    block_chain = bc.blockchain(request.base_url)
-    return request.base_url
+block_chain = bc.blockchain('http://')
 @app.route('/blockchain')
 def blockchain():
     return jsonify({'chain': block_chain.chain,
         'pending_transactions': block_chain.pending_transactions,
         'current_node_url': block_chain.current_node_url,
-        'network_nodes': block_chain.network_nodes})
+        'network_nodes': block_chain.network_nodes,
+        'drones': block_chain.drones})
+@app.route('/add-drone', methods=['POST'])
+def add_drone():
+    data = request.get_json()
+    drone_address = data['drone_address']
+    block_chain.drones.append(drone_address)
 
+@app.route('/remove-drone', methods=['POST'])
+def remove_drone():
+    data = request.get_json()
+    drone_address = data['drone_address']
+    block_chain.drones.pop(drone_address)
 @app.route('/transaction', methods=['POST'])
 def transaction():
     new_transaction = request.get_json()
@@ -125,5 +133,9 @@ async def consensus():
         return jsonify({'note': 'This chain has been replaced.', 'chain':block_chain.chain})
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    try:
+        app.run()
+    except Exception as e:
+        print(sys.argv[1], sys.argv[2])
+        print(e)
+        time.sleep(50000)

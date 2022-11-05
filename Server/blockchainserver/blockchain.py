@@ -9,6 +9,7 @@ class blockchain:
         self.create_new_block(100, '0', '0')
         self.current_node_url = current_node_url
         self.network_nodes = []
+        self.drones = []
 
     # creates new block in the blockchain
     def create_new_block(self,nonce:int, previous_block_hash:str, hash:str):
