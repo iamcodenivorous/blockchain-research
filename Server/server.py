@@ -2,15 +2,18 @@ from flask import Flask,request
 import os
 from subprocess import Popen, CREATE_NEW_CONSOLE, DEVNULL
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'hgftite565etdyrdi56d@@46747uf'
+
 from flask_cors import CORS
 CORS(app)
-@app.route('/start/blockchain', methods=['POST'])
+
+@app.route('/start/server', methods=['POST'])
 def start_blockchain():
 	data = request.get_json()
 	server_ip = data['ip']
 	server_port = data['port']
-	args = r'.\blockchainserver\blockchain_server.py'
-	p = Popen(['python', args], creationflags=CREATE_NEW_CONSOLE)
+	args = r'.\blockchain_server.py'
+	p = Popen(['python', args, server_ip, str(server_port)], shell=True)
 	return 'server started successfully....'
 
 @app.route('/start/drone', methods=['POST'])
@@ -18,9 +21,9 @@ def start_drone():
 	data = request.get_json()
 	drone_ip = data['ip']
 	drone_port = data['port']
-	args = r'.\droneserver\drone_server.py'
-	p = Popen([python, args, drone_ip, str(drone_port)], creationflags=CREATE_NEW_CONSOLE)
+	args = r'.\drone_server.py'
+	p = Popen(['python', args, drone_ip, str(drone_port)], shell=True)
 	return "drone started successfully...."
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	app.run(debug=False)

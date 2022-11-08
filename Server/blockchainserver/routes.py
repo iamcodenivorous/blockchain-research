@@ -1,11 +1,12 @@
-import blockchain as bc
-from flask import Flask, request, jsonify
-import requests_async as requests
+import hashlib
+import uuid
+import json
 import sys
-import time
-import traceback
-app = Flask(__name__)
-block_chain = bc.blockchain('http://')
+import requests_async as requests
+from flask import jsonify, request
+from blockchainserver import blockchain as bc
+from blockchainserver import app
+block_chain = bc.blockchain('http://'+sys.argv[1]+':'+sys.argv[2])
 @app.route('/blockchain')
 def blockchain():
     return jsonify({'chain': block_chain.chain,
@@ -131,11 +132,3 @@ async def consensus():
         block_chain.chain = new_longest_chain
         block_chain.pending_transactions = new_pending_transactions
         return jsonify({'note': 'This chain has been replaced.', 'chain':block_chain.chain})
-
-if __name__ == '__main__':
-    try:
-        app.run()
-    except Exception as e:
-        print(sys.argv[1], sys.argv[2])
-        print(e)
-        time.sleep(50000)
