@@ -20,6 +20,10 @@ def add_drone():
     drone_address = data['drone_address']
     block_chain.drones.append(drone_address)
 
+@app.route('/get-connected-servers', methods=['GET'])
+def connected_servers():
+    return jsonify({'servers': block_chain.network_nodes})
+
 @app.route('/remove-drone', methods=['POST'])
 def remove_drone():
     data = request.get_json()

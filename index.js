@@ -1,88 +1,242 @@
 var drone_port = 3000;
 var server_port = 3000;
+var clicked = 'null'
+var id = 'none'
+var server_list = []
 
-window.oncontextmenu = function ()
-{return false;}
-
-function move_element(elem){
-    if(!check_right_click()){
-        let flag = false
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0
-        parent_ele = elem.parentElement
-        parent_ele.onmousedown = dragMouseDown
-        function dragMouseDown(){
-            e = window.event
-            pos3 = e.clientX
-            pos4 = e.clientY
-            document.onmouseup = closeDragElement
-            document.onmousemove = elementDrag
-        }
-
-        function elementDrag(){
-            e=window.event
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            parent_ele.style.top = (parent_ele.offsetTop - pos2) + "px";
-            parent_ele.style.left = (parent_ele.offsetLeft - pos1) + "px";
-        }
-        function closeDragElement(){
-            document.onmousemove = null
-            document.onmouseup = null
-            flag = true
-        }
-    }   
+document.oncontextmenu = ()=> {return false};
+document.onclick = hideMenu;
+function hideMenu() {
+    document.getElementById("context-menu-server").style.display = 'none'
+    document.getElementById("context-menu-drone").style.display = 'none'
 }
 
-function check_right_click() {
-    var isRightMB;
-    e = window.event;
-    if ("which" in e)
-        isRightMB = e.which == 3; 
-    else if ("button" in e)
-        isRightMB = e.button == 2; 
-    console.log(isRightMB)
-    return isRightMB;
-} 
-function click_drone(){
-    if(check_right_click())
-        alert("you clicked a drone")
+function adjustLine(from, to, line){
+  var fT = from.offsetTop  + from.offsetHeight/2;
+  var tT = to.offsetTop    + to.offsetHeight/2;
+  var fL = from.offsetLeft + from.offsetWidth/2;
+  var tL = to.offsetLeft   + to.offsetWidth/2;
+  var CA   = Math.abs(tT - fT);
+  var CO   = Math.abs(tL - fL);
+  var H    = Math.sqrt(CA*CA + CO*CO);
+  var ANG  = 180 / Math.PI * Math.acos( CA/H );
+  if(tT > fT)
+      var top  = (tT-fT)/2 + fT;
+  else
+      var top  = (fT-tT)/2 + tT;
+  if(tL > fL)
+      var left = (tL-fL)/2 + fL;
+  else
+      var left = (fL-tL)/2 + tL;
+  if(( fT < tT && fL < tL) || ( tT < fT && tL < fL) || (fT > tT && fL > tL) || (tT > fT && tL > fL))
+    ANG *= -1;
+  top-= H/2;
+  line.style["-webkit-transform"] = 'rotate('+ ANG +'deg)';
+  line.style["-moz-transform"] = 'rotate('+ ANG +'deg)';
+  line.style["-ms-transform"] = 'rotate('+ ANG +'deg)';
+  line.style["-o-transform"] = 'rotate('+ ANG +'deg)';
+  line.style["-transform"] = 'rotate('+ ANG +'deg)';
+  line.style.top    = top+'px';
+  line.style.left   = left+'px';
+  line.style.height = H + 'px';
 }
-function click_server(){
-    if(check_right_click())
-        alert("you clicked a server")
+
+function rightClick(e) {
+    e.preventDefault()
+    hideMenu();
+    if(clicked == 'server'){
+        var menu = document.getElementById("context-menu-server")
+        id = e.currentTarget.id
+        clicked = 'none'
+    }
+    else if(clicked == 'drone'){
+        var menu = document.getElementById("context-menu-drone")
+        id = e.currentTarget.id
+        clicked = 'none'
+    }
+    else{
+        hideMenu()
+        id = 'none'
+        return
+    } 
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + "px";
+    menu.style.top = e.clientY + "px";
 }
+
+function move_element(evt){
+    let flag = false
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0
+    parent_ele = evt.currentTarget.parentNode;
+    e = window.event
+    pos3 = evt || e.clientX
+    pos4 = evt || e.clientY
+    document.onmousemove = elementDrag
+    document.onmouseup = closeDragElement
+    get_servers()
+    function elementDrag(){
+        e=window.event
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        parent_ele.style.top = (parent_ele.offsetTop - pos2) + "px";
+        parent_ele.style.left = (parent_ele.offsetLeft - pos1) + "px";
+    }
+    function closeDragElement(){
+        document.onmousemove = null
+        document.onmouseup = null
+    }
+}
+
+
+
 function add_drone(){
-    drone_address = `http://127.0.0.2:${drone_port}`
-    
-    let elem_div = document.createElement('div')
-    elem_div.className = "drone-object"
-    elem_div.id = drone_address
-    elem_div.onclick = click_drone
-    elem_div.style.cssText = 'position:absolute;'
-    let img = document.createElement('img')
-    elem_div.appendChild(img)
-    img.onmousedown = move_element(img)
-    img.id = drone_address+'img'
-    img.src ="images/drone.png"
-    img.title = drone_address
-    document.body.appendChild(elem_div);
-    drone_port +=1
+    fetch('http://127.0.0.1:5000/start/drone', {
+    method: 'POST',
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(
+        {
+            "ip": "127.0.0.2",
+            "port": drone_port
+        }
+    )
+    })
+    .then(response => {
+        if(response.status == 200){
+            drone_address = `http://127.0.0.2:${drone_port}`
+            let elem_div = document.createElement('div')
+            elem_div.className = "drone-object"
+            elem_div.addEventListener('contextmenu', function(ev) {
+                ev.preventDefault();
+                clicked = 'drone';
+                rightClick(ev);
+                return false;
+            }, false);
+            elem_div.id = drone_address
+            elem_div.style.cssText = 'position:absolute;'
+            let img = document.createElement('img')
+            elem_div.appendChild(img)
+            img.onmousedown = move_element
+            img.id = drone_address+'img'
+            img.src ="images/drone.png"
+            img.title = drone_address
+            document.body.appendChild(elem_div);
+            drone_port +=1
+        }
+    })
 }
 
 function add_server(){
-    server_address = `http://127.0.0.1:${server_port}`
-    let elem_div = document.createElement('div')
-    elem_div.className = "server-object"
-    elem_div.id = server_address
-    elem_div.onclick = click_server
-    elem_div.style.cssText = 'position:absolute;'
-    let img = document.createElement('img')
-    elem_div.appendChild(img)
-    img.onmousedown = move_element(img)
-    img.src ="images/server.png"
-    img.title = server_address
-    document.body.appendChild(elem_div);
-    server_port +=1
+    fetch('http://127.0.0.1:5000/start/server', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+            {
+                "ip": "127.0.0.1",
+                "port": server_port
+            }
+        )
+        })
+        .then(response => {
+            console.log(response)
+            if(response.status == 200){
+                server_address = `http://127.0.0.1:${server_port}`
+                let elem_div = document.createElement('div')
+                elem_div.className = "server-object"
+                elem_div.addEventListener('contextmenu', function(ev) {
+                    ev.preventDefault();
+                    clicked = 'server';
+                    rightClick(ev);
+                    return false;
+                }, false);
+                elem_div.id = server_address
+                elem_div.style.cssText = 'position:absolute;'
+                let img = document.createElement('img')
+                elem_div.appendChild(img)
+                img.onmousedown = move_element
+                img.src ="images/server.png"
+                img.title = server_address
+                document.body.appendChild(elem_div);
+                server_list.push(server_address)
+                server_port +=1
+            }
+        })
+}
+
+function connect_server(){
+    address = prompt('Insert address of server:', 'http://')
+    if(address != null && address.length > 5){
+     fetch(`${id}/register-and-broadcast-node`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+            {
+                "new_node_url":address
+            }
+        )
+        })
+        .then(response => {
+            if(response.status == 200){
+                get_servers();
+            }
+        })
+    }
+}
+
+function get_servers(){
+    const lines = document.querySelectorAll('.line');
+    lines.forEach(line => {
+      line.remove();
+    });
+    console.log(server_list)
+    server_list.forEach(server =>
+        fetch(`${server}/get-connected-servers`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+        })
+        .then((response) => response.json())
+        .then(data =>{
+            servers = data["servers"]
+            servers.forEach(s=>{
+                let line = document.createElement('div')
+                line.className = "line"
+                document.body.appendChild(line);
+                adjustLine(document.getElementById(server), 
+                  document.getElementById(s),
+                  line
+                );
+            })
+        })
+    )
+}
+
+function display_data(){
+    window.open(`${id}/blockchain`, '_blank')
+}
+function mine_data(){
+    fetch(`${id}/mine`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if(response.status == 200){
+            alert("data mined successfully");
+        }
+    })   
 }

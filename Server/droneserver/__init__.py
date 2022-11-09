@@ -4,6 +4,6 @@ import sys
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'hgftite565etdyrdi56d@@46747uf'
+app.config['SECRET_KEY'] = 'hgftite565etdyrdi56d@@46747u'
 CORS(app)
 from droneserver import routes

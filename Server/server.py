@@ -1,4 +1,4 @@
-from flask import Flask,request
+from flask import Flask,request, render_template
 import os
 from subprocess import Popen, CREATE_NEW_CONSOLE, DEVNULL
 app = Flask(__name__)
@@ -24,6 +24,10 @@ def start_drone():
 	args = r'.\drone_server.py'
 	p = Popen(['python', args, drone_ip, str(drone_port)], shell=True)
 	return "drone started successfully...."
+
+@app.route('/', methods=['GET'])
+def index():
+	 return render_template('index.html')
 
 if __name__ == '__main__':
 	app.run(debug=False)
