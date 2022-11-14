@@ -1,88 +1,8 @@
 <html>
     <head>
-        <title></title>
-        <style>
-            .icon{
-                width: 40px;
-                height: 40px;
-            }
-            #command-container{
-                padding: 10px;
-                width: 110px;
-                display: flex;
-                justify-content: center;
-                border: 1px solid black;
-                position: fixed;
-                top: calc(100% - 80px);
-                left:calc(50% - 55px);
-                z-index: 3;
-                
-            }
-            #drone{
-                margin-right: 20px;
-            }
-            
-            .drone-object{
-                z-index: 2;
-            }
-            .drone-object img{
-                width: 40px;
-                height: 40px;
-                align-items: center;
-            }
-            .server-object{
-                border: 1px solid #5EBA7D;
-                border-radius: 50%;
-                width: 350px;
-                height: 350px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1;
-            }
-            .server-object img{
-                background-color: white;
-                width: 90px;
-                height: 90px;
-                z-index: 4;
-            }
-            .context-menu {
-                position: absolute;
-                display: none;
-                background: wheat;
-                z-index: 5;
-            }
-  
-            .context-menu ul {
-                padding: 0px;
-                margin: 0px;
-                min-width: 150px;
-                list-style: none;
-            }
-      
-            .context-menu ul li {
-                padding: 7px;
-                border: 1px solid black;
-            }
-      
-            .context-menu ul li a {
-                text-decoration: none;
-                color: black;
-            }
-      
-            .context-menu ul li:hover {
-                background: darkgray;
-            }
-            .line{
-              position:absolute;
-              width:1px;
-              z-index: 3;
-              background-color:#BBDEFB;
-            } 
-
-        </style>
+        <title>Drone Fanet Research</title>
+        <link rel="stylesheet" type="text/css" href="index.css">
     </head>
-
     <body>
         <div id="command-container">
              
@@ -91,16 +11,17 @@
         </div>
         <div id="context-menu-drone" class="context-menu">
             <ul>
-                <li><a href="#">Add Data</a></li>
-                <li><a href="#">Add Drone</a></li>
+                <li onclick="add_drone_data()">Add</li>
+                <li onclick="view_drone_data()">View Data</li>
+                <li onclick="add_drone()">Add Drone</li>
             </ul>
         </div>
         <div id="context-menu-server" class="context-menu">
             <ul>
-                <li><a href="#" onclick="connect_server()">Connect to Server</a></li>
-                <li><a href="#">Get Data</a></li>
-                <li><a href="#" onclick="mine_data()">Mine Data</a></li>
-                <li><a href="#" onclick="display_data()">Display Data</a></li>
+                <li onclick="connect_server()">Connect to Server</li>
+                <li>Get Data</li>
+                <li onclick="mine_data()">Mine Data</li>
+                <li onclick="display_data()">Display Data</li>
             </ul>
         </div>
         <script src="index.js"></script>

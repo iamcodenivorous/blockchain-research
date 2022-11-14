@@ -4,6 +4,7 @@ var clicked = 'null'
 var id = 'none'
 var server_list = []
 
+
 document.oncontextmenu = ()=> {return false};
 document.onclick = hideMenu;
 function hideMenu() {
@@ -31,11 +32,7 @@ function adjustLine(from, to, line){
   if(( fT < tT && fL < tL) || ( tT < fT && tL < fL) || (fT > tT && fL > tL) || (tT > fT && tL > fL))
     ANG *= -1;
   top-= H/2;
-  line.style["-webkit-transform"] = 'rotate('+ ANG +'deg)';
-  line.style["-moz-transform"] = 'rotate('+ ANG +'deg)';
-  line.style["-ms-transform"] = 'rotate('+ ANG +'deg)';
-  line.style["-o-transform"] = 'rotate('+ ANG +'deg)';
-  line.style["-transform"] = 'rotate('+ ANG +'deg)';
+  line.style.transform = 'rotate('+ ANG +'deg)';
   line.style.top    = top+'px';
   line.style.left   = left+'px';
   line.style.height = H + 'px';
@@ -83,12 +80,62 @@ function move_element(evt){
         parent_ele.style.top = (parent_ele.offsetTop - pos2) + "px";
         parent_ele.style.left = (parent_ele.offsetLeft - pos1) + "px";
     }
-    function closeDragElement(){
+    function closeDragElement(evt){
         document.onmousemove = null
         document.onmouseup = null
+        if(evt.target.parentNode.className == "drone-object")
+            handle_drag(evt);
     }
 }
 
+function handle_drag(event) {
+    const droneRect = event.target.parentNode.getBoundingClientRect();
+    if(server_list.length > 0){
+        console.log(server_list)
+        for(let server in server_list){
+            let server_div = document.getElementById(server_list[server])
+            const serverRect = server_div.getBoundingClientRect();
+            drone_address = event.target.parentNode.id
+            server_address = server_list[server]
+            if(!(droneRect.top > serverRect.bottom ||droneRect.right < serverRect.left || droneRect.bottom < serverRect.top || droneRect.left > serverRect.right)){
+                fetch(`${server_address}/add-drone`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        "drone_address": drone_address,
+                    }
+                )
+                })
+                .then(response => {
+                    if(response.status == 200)
+                        alert("Drone connected to server.")
+                })
+
+            }else{
+                fetch(`${server_address}/remove-drone`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        "drone_address": drone_address,
+                    }
+                )
+                })
+                .then(response => {
+                    if(response.status == 200)
+                        alert("Drone removed.")
+                })
+            }
+        }
+    }
+}
 
 
 function add_drone(){
@@ -126,6 +173,8 @@ function add_drone(){
             img.title = drone_address
             document.body.appendChild(elem_div);
             drone_port +=1
+            alert("Drone Added...")
+
         }
     })
 }
@@ -145,7 +194,6 @@ function add_server(){
         )
         })
         .then(response => {
-            console.log(response)
             if(response.status == 200){
                 server_address = `http://127.0.0.1:${server_port}`
                 let elem_div = document.createElement('div')
@@ -166,6 +214,7 @@ function add_server(){
                 document.body.appendChild(elem_div);
                 server_list.push(server_address)
                 server_port +=1
+                alert("Server Added...")
             }
         })
 }
@@ -194,11 +243,8 @@ function connect_server(){
 }
 
 function get_servers(){
-    const lines = document.querySelectorAll('.line');
-    lines.forEach(line => {
-      line.remove();
-    });
-    console.log(server_list)
+    document.querySelectorAll('.line').forEach(e => e.remove());
+    const liners = new Set()
     server_list.forEach(server =>
         fetch(`${server}/get-connected-servers`, {
         method: 'GET',
@@ -211,20 +257,53 @@ function get_servers(){
         .then(data =>{
             servers = data["servers"]
             servers.forEach(s=>{
-                let line = document.createElement('div')
-                line.className = "line"
-                document.body.appendChild(line);
-                adjustLine(document.getElementById(server), 
-                  document.getElementById(s),
-                  line
-                );
+                if(!(liners.has(s+'to'+server) || liners.has(server+'to'+s))){
+                    let line = document.createElement('div')
+                    line.className = "line"
+                    document.body.appendChild(line);
+                    adjustLine(document.getElementById(server), 
+                    document.getElementById(s),
+                    line)
+                    liners.add(s+'to'+server)
+                }
             })
         })
     )
 }
 
+function view_drone_data(){
+    window.open(`${id}/drone`, '_blank');
+}
+
+function add_drone_data(){
+    let input = prompt("Enter drone data \n(Format: cordinate => data)").split('=>')
+    if(input.length > 1){
+        cordinate = input[0].trim()
+        data = input[1].trim()
+        fetch(`${id}/add-data`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+            {
+                "cordinate": cordinate,
+                "data": data
+            }
+        )
+        })
+        .then(response => {
+            if(response.status == 200){
+                alert("Data added successfully...")
+            }
+        })
+
+    }
+}
+
 function display_data(){
-    window.open(`${id}/blockchain`, '_blank')
+    window.open(`${id}/blockchain`, '_blank');
 }
 function mine_data(){
     fetch(`${id}/mine`, {
@@ -240,3 +319,4 @@ function mine_data(){
         }
     })   
 }
+

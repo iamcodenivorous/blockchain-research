@@ -14,21 +14,11 @@ def blockchain():
         'current_node_url': block_chain.current_node_url,
         'network_nodes': block_chain.network_nodes,
         'drones': block_chain.drones})
-@app.route('/add-drone', methods=['POST'])
-def add_drone():
-    data = request.get_json()
-    drone_address = data['drone_address']
-    block_chain.drones.append(drone_address)
 
 @app.route('/get-connected-servers', methods=['GET'])
 def connected_servers():
     return jsonify({'servers': block_chain.network_nodes})
 
-@app.route('/remove-drone', methods=['POST'])
-def remove_drone():
-    data = request.get_json()
-    drone_address = data['drone_address']
-    block_chain.drones.pop(drone_address)
 @app.route('/transaction', methods=['POST'])
 def transaction():
     new_transaction = request.get_json()
@@ -136,3 +126,42 @@ async def consensus():
         block_chain.chain = new_longest_chain
         block_chain.pending_transactions = new_pending_transactions
         return jsonify({'note': 'This chain has been replaced.', 'chain':block_chain.chain})
+
+# drone related routes
+@app.route('/add-drone', methods=['POST'])
+async def add_drone():
+    data = request.get_json()
+    drone_address = data['drone_address']
+    if drone_address not in block_chain.drones:
+        block_chain.drones.append(drone_address)
+        res = await requests.post(url=drone_address+'/add-server', json={'server_url': block_chain.current_node_url})
+    return jsonify({'message': "drone added"})
+
+@app.route('/remove-drone', methods=['POST'])
+async def remove_drone():
+    data = request.get_json()
+    drone_address = data['drone_address']
+    if drone_address in block_chain.drones:
+        block_chain.drones.remove(drone_address)
+        res = await requests.get(url=drone_address+'/remove-server')
+    return jsonify({'message': "drone removed successfully"})
+
+@app.route('/get-data-from-drone', methods=['GET'])
+async def get_data_from_drone():
+    data = request.get_json()
+    drone_address = data['drone_address']
+    if block_chain.drones.index(drone_address) != -1:
+        data = await requests.get(drone_address+'/get-data')
+        data_json = data.json()
+        if len(data_json['data'] > 0):
+            for data_element in data_json['data']:
+                res = await requests.post(url=block_chain.current_node_url + '/transaction/broadcast', json = {'data': data_element, 'sender': drone_address, 'recipient': blockchain.current_node_url})
+        return jsonify({'message': "drone removed successfully"}), 200
+    else:
+        return jsonify({'message': 'drone not found'}), 404
+
+@app.route('/get-all-data-from-drones', methods=['GET'])
+def get_all_data():
+    drone_address = block_chain.drones[0]
+    data = request.get(drone_address+'/get-all-data')
+    

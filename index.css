@@ -1,0 +1,72 @@
+.icon{
+    width: 40px;
+    height: 40px;
+}
+#command-container{
+    padding: 10px;
+    width: 110px;
+    display: flex;
+    justify-content: center;
+    border: 1px solid black;
+    position: fixed;
+    top: calc(100% - 80px);
+    left:calc(50% - 55px);
+    z-index: 3;
+    border-radius: 8%;
+}
+#drone{
+    margin-right: 20px;
+}
+
+.drone-object{
+    z-index: 2;
+}
+.drone-object img{
+    width: 40px;
+    height: 40px;
+    align-items: center;
+}
+.server-object{
+    border: 1px solid #5EBA7D;
+    border-radius: 50%;
+    width: 350px;
+    height: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+.server-object img{
+    background-color: white;
+    width: 90px;
+    height: 90px;
+    z-index: 4;
+}
+.context-menu {
+    position: absolute;
+    display: none;
+    background: wheat;
+    z-index: 5;
+}
+
+.context-menu ul {
+    padding: 0px;
+    margin: 0px;
+    min-width: 150px;
+    list-style: none;
+}
+
+.context-menu ul li {
+    padding: 7px;
+    border: 1px solid black;
+}
+
+.context-menu ul li:hover {
+    background: darkgray;
+}
+.line{
+  position:absolute;
+  width:1px;
+  z-index: 3;
+  background-color:red;
+}
