@@ -30,7 +30,7 @@ def add_data():
 @app.route('/add-neighbour-drone', methods=['POST'])
 async def add_neighbour_drone():
 	data = request.get_json()
-	drone_address = data["drone_address"]
+	drone_address = data['drone_address']
 	drone.add_neighbour_drone(drone_address)
 	res = await requests.post(url = drone_address+'/recieve-neighbour-drone', json={"drone_address": drone.current_drone_url})
 	return jsonify({'message': 'drone added successfully'})
@@ -42,6 +42,26 @@ def recieve_neighbour_drone():
 	drone.add_neighbour_drone(drone_address)
 	return jsonify({'message': 'drone added successfully'})
 
+@app.route('/disconnect_drone', methods=['POST'])
+def disconnect_drones():
+	data = request.get_json()
+	drone_url = data['drone_url']
+	drone.remove_neighbour_drone(drone_url)
+
+@app.route('/disconnect-fanet', methods=['GET'])
+async def disconnect_fanet():
+	if len(drone.neighbour_drones) > 0:
+		for dr in drone.neighbour_drones:
+			req = await requests.post(url = dr+'/disconnect_drone', json={'drone_url': drone.current_drone_url})
+		if len(drone.neighbour_drones) >= 2:
+			for i in range(1, len(drone.neighbour_drones)):
+				previous_drone_url = drone.neighbour_drones[i - 1]
+				current_drone_url = drone.neighbour_drones[i]
+				req = await requests.post(url=previous_drone_url+'/add-neighbour-drone', json={'drone_address': current_drone_url})
+		drone.neighbour_drones = []
+	else:
+		return jsonify({'message': 'drone not connected to any network'}), 400
+	return jsonify({'message': 'drone disconnected successfully'})
 
 # server routes
 @app.route('/add-server', methods=['POST'])
@@ -62,6 +82,7 @@ def get_data():
 	temp = drone.data.copy()
 	drone.data = []
 	return jsonify({"data": temp})
+
 
 @app.route('/get-all-data', methods=['GET'])
 async def get_all_data():

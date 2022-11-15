@@ -14,7 +14,10 @@ class drone:
 
 	def add_neighbour_drone(self, drone_url):
 		self.neighbour_drones.append(drone_url)
-		
+	
+	def remove_neighbour_drone(self, drone_url):
+		self.neighbour_drones.remove(drone_url)
+
 	def search_data(self, cordinate):
 		for data_object in data:
 			if data_object['cordinate'] == cordinate:

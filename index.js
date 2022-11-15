@@ -93,7 +93,6 @@ function move_element(evt){
 function handle_drag(event) {
     const droneRect = event.target.parentNode.getBoundingClientRect();
     if(server_list.length > 0){
-        console.log(server_list)
         for(let server in server_list){
             let server_div = document.getElementById(server_list[server])
             const serverRect = server_div.getBoundingClientRect();
@@ -184,64 +183,66 @@ function add_drone(){
 
 function add_server(){
     fetch('http://127.0.0.1:5000/start/server', {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(
-            {
-                "ip": "127.0.0.1",
-                "port": server_port
-            }
-        )
-        })
-        .then(response => {
-            if(response.status == 200){
-                server_address = `http://127.0.0.1:${server_port}`
-                let elem_div = document.createElement('div')
-                elem_div.className = "server-object"
-                elem_div.addEventListener('contextmenu', function(ev) {
-                    ev.preventDefault();
-                    clicked = 'server';
-                    rightClick(ev);
-                    return false;
-                }, false);
-                elem_div.id = server_address
-                elem_div.style.cssText = 'position:absolute;'
-                let img = document.createElement('img')
-                elem_div.appendChild(img)
-                img.onmousedown = move_element
-                img.src ="images/server.png"
-                img.title = server_address
-                document.body.appendChild(elem_div);
-                server_list.push(server_address)
-                server_port +=1
-                alert("Server Added...")
-            }
-        })
+    method: 'POST',
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(
+        {
+            "ip": "127.0.0.1",
+            "port": server_port
+        }
+    )
+    })
+    .then(response => {
+        if(response.status == 200){
+            server_address = `http://127.0.0.1:${server_port}`
+            let elem_div = document.createElement('div')
+            elem_div.className = "server-object"
+            elem_div.addEventListener('contextmenu', function(ev) {
+                ev.preventDefault();
+                clicked = 'server';
+                rightClick(ev);
+                return false;
+            }, false);
+            elem_div.id = server_address
+            elem_div.style.cssText = 'position:absolute;'
+            let img = document.createElement('img')
+            elem_div.appendChild(img)
+            img.onmousedown = move_element
+            img.src ="images/server.png"
+            img.title = server_address
+            document.body.appendChild(elem_div);
+            server_list.push(server_address)
+            server_port +=1
+            alert("Server Added...")
+        }
+    })
 }
 
 function connect_server(){
     address = prompt('Insert address of server:', 'http://')
-    if(address != null && address.length > 5){
-     fetch(`${id}/register-and-broadcast-node`, {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(
-            {
-                "new_node_url":address
-            }
-        )
-        })
-        .then(response => {
-            if(response.status == 200){
-                get_servers();
-            }
-        })
+    if(address != null && address.length > 5 && server_list.includes(address)){
+         fetch(`${id}/register-and-broadcast-node`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(
+                {
+                    "new_node_url":address
+                }
+            )
+            })
+            .then(response => {
+                if(response.status == 200){
+                    get_servers();
+                }
+            })
+    }else{
+        alert("Server not found....")
     }
 }
 
@@ -303,7 +304,6 @@ function get_drones(){
     )
 }
 
-
 function view_drone_data(){
     window.open(`${id}/drone`, '_blank');
 }
@@ -313,25 +313,30 @@ function add_drone_data(){
     if(input.length > 1){
         cordinate = input[0].trim()
         data = input[1].trim()
-        fetch(`${id}/add-data`, {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(
-            {
-                "cordinate": cordinate,
-                "data": data
-            }
-        )
-        })
-        .then(response => {
-            if(response.status == 200){
-                alert("Data added successfully...")
-            }
-        })
-
+        if(cordinate.length > 0 && data.length > 0){
+            fetch(`${id}/add-data`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(
+                {
+                    "cordinate": cordinate,
+                    "data": data
+                }
+            )
+            })
+            .then(response => {
+                if(response.status == 200){
+                    alert("Data added successfully...")
+                }
+            })
+        }else{
+            alert("Enter valid data")
+        }
+    }else{
+        alert("Enter data in data specified format")
     }
 }
 
@@ -357,7 +362,7 @@ function mine_data(){
 function add_neighbour_drone(){
     corrent_drone = id    
     let neighbour_drone_address = prompt("Enter neighbour drone address:", 'http://')
-    if(neighbour_drone_address.length > 8){
+    if(neighbour_drone_address.length > 8 && drone_list.includes(neighbour_drone_address)){
         fetch(`${id}/add-neighbour-drone`, {
         method: 'POST',
         headers: {
@@ -376,12 +381,15 @@ function add_neighbour_drone(){
                 alert("Drone connected successfully...")
             }
         })
+    }else{
+        alert("Drone not found")
     }
 }
 
 function get_data(){
     let drone_address = prompt("Enter drone address:", "http://")
-    if(drone_address.length > 8){
+    if(drone_address.length > 8 && drone_list.includes(drone_address)){
+
         fetch(`${id}/get-data-from-drone`, {
         method: 'POST',
         headers: {
@@ -402,11 +410,11 @@ function get_data(){
                 alert("Drone not connected to server...")
             }
         })
+    }else{
+        alert('Drone drone not found')
     }
 
 }
-
-
 
 function get_all_data(){
     fetch(`${id}/get-all-data-from-drones`, {
@@ -422,4 +430,21 @@ function get_all_data(){
                 alert("No drones connected to server...")
             }
         })
+}
+
+function disconnect_fanet(){
+    fetch(`${id}/disconnect-fanet`, {
+    method: 'GET',
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }})
+    .then(response => {
+        if(response.status == 200){
+            alert("Drone Disconnected from fanet...")
+            get_drones();
+        }else if(response.status == 400){
+            alert("Drone not connected to any fanet...")
+        }
+    })
 }
