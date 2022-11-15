@@ -70,3 +70,10 @@
   z-index: 3;
   background-color:red;
 }
+
+.line-2{
+  position:absolute;
+  width:1px;
+  z-index: 3;
+  background-color:blue;
+}

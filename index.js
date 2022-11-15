@@ -405,3 +405,21 @@ function get_data(){
     }
 
 }
+
+
+
+function get_all_data(){
+    fetch(`${id}/get-all-data-from-drones`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }})
+        .then(response => {
+            if(response.status == 200){
+                alert("Data added successfully...")
+            }else if(response.status == 404){
+                alert("No drones connected to server...")
+            }
+        })
+}

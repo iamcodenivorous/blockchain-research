@@ -82,7 +82,7 @@ async def register_and_broadcast_nodes():
     return jsonify({'note': 'New node registered with network successfully.'})
 
 @app.route('/register-nodes-bulk', methods=['POST'])
-def register_nodes_bulk():
+async def register_nodes_bulk():
     data = request.get_json()
     all_network_nodes = data['all_network_nodes']
     for new_node_url in all_network_nodes:
@@ -92,6 +92,7 @@ def register_nodes_bulk():
         not_current_node = block_chain.current_node_url != new_node_url
         if not node_already_present and not_current_node:
             block_chain.network_nodes.append(new_node_url)
+    await requests.get(block_chain.current_node_url+'/consensus')
     return jsonify({'note':'Bulk registration successful'})
 
 @app.route('/register-node', methods=['POST'])
@@ -150,7 +151,7 @@ async def remove_drone():
 async def get_data_from_drone():
     data = request.get_json()
     drone_address = data['drone_address']
-    if block_chain.drones.index(drone_address) != -1:
+    if block_chain.drones.count(drone_address) > 0:
         data = await requests.get(drone_address+'/get-data')
         data_json = data.json()
         if len(data_json['data']) > 0:
@@ -161,7 +162,18 @@ async def get_data_from_drone():
         return jsonify({'message': 'drone not connected to server.'}), 404
 
 @app.route('/get-all-data-from-drones', methods=['GET'])
-def get_all_data():
-    drone_address = block_chain.drones[0]
-    data = request.get(drone_address+'/get-all-data')
-    
+async def get_all_data():
+    if len(block_chain.drones) > 0:
+        drone_address = block_chain.drones[0]
+        visited = []
+        data = await requests.get(drone_address+'/get-all-data', json={'visited': visited})
+        data_json = data.json()
+        if len(data_json['data']) > 0:
+            for data_element in data_json['data']:
+                for drone_name in data_element:
+                    drone_data = data_element[drone_name]
+                    if len(drone_data) > 0:
+                        res = await requests.post(url=block_chain.current_node_url + '/transaction/broadcast', json = {'data': drone_data, 'sender': drone_name, 'recipient': block_chain.current_node_url})
+        return jsonify({'message': 'data added successfully'}), 200
+    else:
+        return jsonify({'message': 'no drones connected to server'}), 404

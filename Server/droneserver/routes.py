@@ -12,9 +12,7 @@ def drone_data():
 		'neighbour_drones': drone.neighbour_drones,
 		'server': drone.server
 		})
-@app.route('/get-data', methods=['GET'])
-def get_data():
-	return jsonify({"data": drone.data})
+
 
 @app.route('/get-connected-drones', methods=['GET'])
 def get_connected_drones():
@@ -57,4 +55,29 @@ def add_server():
 def remove_server():
 	drone.server = ""
 	return jsonify({'message': 'Server removed successfully.'})
+
+
+@app.route('/get-data', methods=['GET'])
+def get_data():
+	temp = drone.data.copy()
+	drone.data = []
+	return jsonify({"data": temp})
+
+@app.route('/get-all-data', methods=['GET'])
+async def get_all_data():
+	data = request.get_json()
+	visited = data['visited']
+	visited.append(drone.current_drone_url)
+	data = [] 
+	data.append({drone.current_drone_url: drone.data.copy()})
+	if len(drone.neighbour_drones) > 0:
+		for dr in drone.neighbour_drones:
+			if visited.count(dr) == 0:
+				res = await requests.get(dr+'/get-all-data', json={'visited':visited})
+				data_json = res.json()
+				if len(data_json['data']) > 0:
+					for data_element in data_json['data']:
+						data.append(data_element)
+	drone.data = []
+	return jsonify({'data': data.copy()})
 
