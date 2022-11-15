@@ -146,19 +146,19 @@ async def remove_drone():
         res = await requests.get(url=drone_address+'/remove-server')
     return jsonify({'message': "drone removed successfully"})
 
-@app.route('/get-data-from-drone', methods=['GET'])
+@app.route('/get-data-from-drone', methods=['POST'])
 async def get_data_from_drone():
     data = request.get_json()
     drone_address = data['drone_address']
     if block_chain.drones.index(drone_address) != -1:
         data = await requests.get(drone_address+'/get-data')
         data_json = data.json()
-        if len(data_json['data'] > 0):
+        if len(data_json['data']) > 0:
             for data_element in data_json['data']:
-                res = await requests.post(url=block_chain.current_node_url + '/transaction/broadcast', json = {'data': data_element, 'sender': drone_address, 'recipient': blockchain.current_node_url})
-        return jsonify({'message': "drone removed successfully"}), 200
+                res = await requests.post(url=block_chain.current_node_url + '/transaction/broadcast', json = {'data': data_element, 'sender': drone_address, 'recipient': block_chain.current_node_url})
+        return jsonify({'message': 'data added successfully.'}), 200
     else:
-        return jsonify({'message': 'drone not found'}), 404
+        return jsonify({'message': 'drone not connected to server.'}), 404
 
 @app.route('/get-all-data-from-drones', methods=['GET'])
 def get_all_data():

@@ -3,6 +3,7 @@ var server_port = 3000;
 var clicked = 'null'
 var id = 'none'
 var server_list = []
+var drone_list = []
 
 
 document.oncontextmenu = ()=> {return false};
@@ -71,6 +72,7 @@ function move_element(evt){
     document.onmousemove = elementDrag
     document.onmouseup = closeDragElement
     get_servers()
+    get_drones()
     function elementDrag(){
         e=window.event
         pos1 = pos3 - e.clientX;
@@ -129,8 +131,8 @@ function handle_drag(event) {
                 )
                 })
                 .then(response => {
-                    if(response.status == 200)
-                        alert("Drone removed.")
+                    //if(response.status == 200)
+                        //alert("Drone removed.")
                 })
             }
         }
@@ -172,6 +174,7 @@ function add_drone(){
             img.src ="images/drone.png"
             img.title = drone_address
             document.body.appendChild(elem_div);
+            drone_list.push(drone_address)
             drone_port +=1
             alert("Drone Added...")
 
@@ -271,6 +274,36 @@ function get_servers(){
     )
 }
 
+function get_drones(){
+    document.querySelectorAll('.line-2').forEach(e => e.remove());
+    const liners = new Set()
+    drone_list.forEach(drone =>
+        fetch(`${drone}/get-connected-drones`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+        })
+        .then((response) => response.json())
+        .then(data =>{
+            drones = data["drones"]
+            drones.forEach(d=>{
+                if(!(liners.has(d+'to'+drone) || liners.has(drone+'to'+d))){
+                    let line = document.createElement('div')
+                    line.className = "line-2"
+                    document.body.appendChild(line);
+                    adjustLine(document.getElementById(drone), 
+                    document.getElementById(d),
+                    line)
+                    liners.add(d+'to'+drone)
+                }
+            })
+        })
+    )
+}
+
+
 function view_drone_data(){
     window.open(`${id}/drone`, '_blank');
 }
@@ -305,6 +338,7 @@ function add_drone_data(){
 function display_data(){
     window.open(`${id}/blockchain`, '_blank');
 }
+
 function mine_data(){
     fetch(`${id}/mine`, {
         method: 'GET',
@@ -320,3 +354,54 @@ function mine_data(){
     })   
 }
 
+function add_neighbour_drone(){
+    corrent_drone = id    
+    let neighbour_drone_address = prompt("Enter neighbour drone address:", 'http://')
+    if(neighbour_drone_address.length > 8){
+        fetch(`${id}/add-neighbour-drone`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+            {
+                "drone_address": neighbour_drone_address,
+            }
+        )
+        })
+        .then(response => {
+            if(response.status == 200){
+                get_drones()
+                alert("Drone connected successfully...")
+            }
+        })
+    }
+}
+
+function get_data(){
+    let drone_address = prompt("Enter drone address:", "http://")
+    if(drone_address.length > 8){
+        fetch(`${id}/get-data-from-drone`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+            {
+                "drone_address": drone_address,
+            }
+        )
+        })
+        .then(response => {
+            if(response.status == 200){
+                get_drones()
+                alert("Drone connected successfully...")
+            }else if(response.status == 404){
+                alert("Drone not connected to server...")
+            }
+        })
+    }
+
+}
